@@ -54,22 +54,22 @@ class SessionHandler
    * Database table
    * @var string
    */
-  protected $tableName = '';
+  protected $tableName = 'session';
 
   /**
-   * Number of seconds before the session expires.
+   * Number of seconds before the session expires
    * @var integer
    */
   protected $secondsUntilExpiration = 7200;
 
   /**
-   * Number of seconds before the session ID is regenerated.
+   * Number of seconds before the session ID is regenerated
    * @var integer
    */
   protected $renewalTime = 300;
 
   /**
-   * Close the session when the browser is closed?
+   * Whether to kill the session when the browser is closed
    * @var boolean
    */
   protected $expireOnClose = false;
@@ -87,13 +87,13 @@ class SessionHandler
   protected $checkUserAgent = false;
 
   /**
-   * Will only set the session cookie if a secure HTTPS connection is being used.
+   * Will only set the session cookie if a secure HTTPS connection is being used
    * @var boolean
    */
   protected $secureCookie = false;
 
   /**
-   * Random salt to hash
+   * Encyrption key to salt hash
    * @var string
    */
   protected $salt = '';
@@ -116,7 +116,7 @@ class SessionHandler
   protected $userAgent = 'unknown';
 
   /**
-   * A hashed string which is the ID of the session.
+   * The session ID hash
    * @var string
    */
   protected $sessionId = '';
@@ -134,30 +134,20 @@ class SessionHandler
   protected $now;
 
   /**
-   * Logging mechanism
-   * @var object
-   */
-  protected $logger = null;
-
-  /**
    * Constructor
    *
    * Initialize the session handler.   
    * @param object, PDO Database Connection
    * @param array, Configuration options
-   * @param object, Logging Service, optional
    * @return void
    */
-  public function __construct(PDO $db, array $config, $logger = null)
+  public function __construct(PDO $db, array $config)
   {
     // Set database connection handle
     $this->db = $db;
 
     // Set current time
     $this->now = time();
-
-    // Set logger
-    $this->logger = $logger;
 
     // Set session configuration
     $this->setConfig($config);
@@ -167,7 +157,7 @@ class SessionHandler
       $this->create();
     }
 
-    // Cleans expired sessions and set cookie
+    // Clean expired sessions and set cookie
     $this->cleanExpired();
     $this->setCookie();
   }
@@ -175,9 +165,9 @@ class SessionHandler
   /**
    * Set Data
    *
-   * Set key:value or an array of key:values to the session data array.
+   * Set key => value or an array of key => values to the session data array.
    * @param mixed, session data array or string (key)
-   * @param string, data value for single key
+   * @param string, value for single key
    * @return void
    */
   public function setData($newdata, $value = '')
@@ -220,14 +210,14 @@ class SessionHandler
   /**
    * Get Data
    * 
-   * Return a specific key:value or the array of key:values from the session data array.
+   * Return a specific key => value or the array of key => values from the session data array.
    * @param string - session data array key
    * @return mixed - mixed value or array
    */
   public function getData($key = null)
   {
     if ($key === null) {
-      return (!empty($this->data)) ? $this->data : null;
+      return ($this->data) ? $this->data : null;
     }
 
     return isset($this->data[$key]) ? $this->data[$key] : null;
@@ -267,7 +257,7 @@ class SessionHandler
    */
   private function read()
   {
-    // Fetche session cookie
+    // Fetch session cookie
     $sessionId = isset($_COOKIE[$this->cookieName]) ? $_COOKIE[$this->cookieName] : false;
 
     // Cookie does not exist
@@ -283,7 +273,7 @@ class SessionHandler
 
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Did a session exist?
+    // Run validations if a session exists
     if ($result !== false && !empty($result)) {
 
       // Check if the session has expired in the database

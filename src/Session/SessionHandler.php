@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
 */
-namespace WolfMoritz;
+namespace WolfMoritz\Session;
 
 use \PDO;
 use \Exception;

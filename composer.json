@@ -1,6 +1,7 @@
 {
     "name": "wolfmoritz/session",
-    "description": "Manage session state without PHP sessions",
+    "description": "Manage session state without native PHP sessions",
+    "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/wolfmoritz/session",
     "keywords": ["session"],

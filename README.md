@@ -19,7 +19,7 @@ Modify your `composer.json` project file to require this package.
 ```
 
 Then run `composer install`. This will download the files and register the class with the composer autoloader.
-
+ 
 ### Or Just the Files, Please
 If you do not use Composer, download this project and unzip. The only file you need is `src/Session/SessionHandler.php`. Place that file in your project and be sure to include it in your startup script.
 

@@ -1,50 +1,50 @@
-PHP Session Handler
-#
+#PHP Session Handler
 
-This class maintains user session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is a hash of a random number, the time, a fragment of the client IP address, and the encryption key as salt. The session key is regenerated every 5 minutes, or as set in the configuation file. No information, other than they ke, is stored client side. All session information is kept in the MySQL table. 
+This class maintains user session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is a salted encyrpted hash. The session key is regenerated every 5 minutes, or as set in the configuation file. No information, other than the key, is stored client side. All user session information is kept server side in a database table. 
 
-When the session runs the session handler looks for a session record matching cookie key, and if found it then runs some optional checks to validate the session. If any of the checks fail, or the session has timed out, the session is destoyed and a new session is started.
+When the session runs the session handler looks for a session record matching the cookie key, and if found it then runs optional checks to validate the session. If any of the checks fail, or if the session has timed out, the session is destoyed and a new session is started.
 
-Session data can be set and retrieved at any time as either a key (string) value pair, or an array of key value pairs.
+Session data can be set and retrieved at any time as either a key (string) value pair, or an array of key-value pairs.
 
 ## Installation
 You can use Composer to install the session handler or just download the files to your project.
 
 ### Using Composer
-Add
+Modify your `composer.json` project file to require this package.
 
-```
+```json
 "require": [
-	"wolfmoritz/session": "*"
+  "wolfmoritz/session": "*"
 ]
 ```
 
-to your `composer.json` project file and run `composer install`. This will download the files and register the class with the composer autoloader.
+Then run `composer install`. This will download the files and register the class with the composer autoloader.
 
-### Just the Files, Please
-Download this project. The only file you need is `src/Session/SessionHandler.php`. Place that file in your project and be sure to include it in your startup script.
+### Or Just the Files, Please
+If you do not use Composer, download this project and unzip. The only file you need is `src/Session/SessionHandler.php`. Place that file in your project and be sure to include it in your startup script.
 
 ### Create the Table
-You will need to create the session table in your MySQL database using the `SessionTable.sql` script. You can change the table name in the script if desired, but you will need to provide the table name as a configuration item for `tableName`.
+You will need to create the session table in your MySQL database using the **SessionTable.sql** script. You can change the table name in the script if desired, but you will need to provide the table name as a configuration item for `tableName`.
 
 ## Usage
-To use the session handler create a new instance of SessionHandler passing in a PDO database connection and the configuration array. 
+To use the session handler create a new instance of `SessionHandler` passing in a PDO database connection and the configuration array. 
 
 ### Provide a PDO Connection
 Define a new PDO connection and pass it in as the first argument of the constructor.
 
 ```php
 $dsn = 'mysql:host=' . HOST . ';dbname=' . DBNAME;
-$dbh = new PDO($dsn, USERNAME, PASSWORD, DBOPTIONS);
+$dbh = new PDO($dsn, USERNAME, PASSWORD, DB_OPTIONS);
 ```
 
 ### Define Configuruation
-You can see all modifiable configuration options in the class properties. Define a configuration array and only include the items you wish to change. The only required configuration is your application's encryption key. Use a long, random string, and do not share it. The database connection handle is not defined the configuration array, and is injected as the first argument of the constructor.
+Define a configuration array and only include the options you wish to change. The only required configuration option is your application's encryption key. Use a long, random string and do not share it.
 
 **Options**
+
 Option|Default|Description
----|---|---
-cookieName|'sessionCookie'|Your session cookie name.
+---|:---:|---
+cookieName | 'sessionCookie' | Your session cookie name.
 tableName|'session'|Name of the MySQL table that stores your sessions.
 secondsUntilExpiration|7200|How long before the session expires in seconds.
 renewalTime|300|How long before the session key is regenerated in seconds.
@@ -54,35 +54,33 @@ checkUserAgent|false|Whether or not to match the User Agent to the stored sessio
 secureCookie|false|Whether or not to set an encrypted cookie, true of false. Note, this only works when using *https*.
 salt|*none*|Your custom encryption key. Any long (16+ characters) string of characters.
 
-Only supply configuration options you wish to change.
-
 ```php
 $config['salt'] = 'akjfao8ygoa8hba9707lakusdof87';
 $config['secondsUntilExpiration'] = 1800; // 30 minutes
 // More configuration options ...
 ```
 
-### Usage Running It
+### Creating a Session
+Create a new session as part of your application flow.
 
-
-```
+```php
 $Session = new WolfMoritz\SessionHandler($dbh, $config);
 ```
 
-The session validation runs immediately and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.
+The session runs immediately and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.
 
 ### Save Session Data
-Once the session is running, you can add or update session data by passing in key value pairs or an array of key value pairs using the `setData()` method. The value can be any string, array, number, integer, or serializable object.
+Once the session is running, you can add or update session data by passing in key-value pairs or an array of key-value pairs using the `setData()` method. The value can be any type as long as it is serializable.
 
-```
-// Save simple key value pair
+```php
+// Save simple key-value pair
 $Session->setData('someKey', 'someValue');
 
-// Save array of key value pairs
+// Save array of key-value pairs
 $sessionData = array(
   'feline' => 'cat',
   'canine' => 'dog',
-  'lastModified' => time()
+  'lastModified' => '2015-01-28'
 );
 $Session->setData($sessionData);
 ```
@@ -92,7 +90,7 @@ Supplying the same key will overwrite any prior value saved in session.
 ### Get Session Data
 To get session data pass in the item key to `getData()`. The method returns `null` if no key was found. To get all session data simply do not provide an argument.
 
-```
+```php
 // Get one session item
 $value = $Session->getData('someKey');
 
@@ -103,7 +101,7 @@ $values = $Session->getData();
 ### Unset Session Data
 You can delete a session item by passing in the item key to `unsetData()`, or delete all session data by not providing an argument.
 
-```
+```php
 // Delete one session item
 $Session->unsetData('someKey');
 
@@ -114,7 +112,7 @@ $Session->unsetData();
 ### Delete a Session
 Any session that does not pass validation will be destoyed automatically. But, if you want to delete a session call the `destroy()` method.
 
-```
+```php
 $Session->destroy();
 ```
 

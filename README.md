@@ -13,9 +13,9 @@ You can use Composer to install the session handler or just download the files t
 Modify your `composer.json` project file to require this package.
 
 ```json
-"require": [
+"require": {
   "wolfmoritz/session": "*"
-]
+}
 ```
 
 Then run `composer install`. This will download the files and register the class with the composer autoloader.

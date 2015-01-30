@@ -14,7 +14,7 @@ Modify your `composer.json` project file to require this package.
 
 ```json
 "require": {
-  "wolfmoritz/session": "*"
+  "wolfmoritz/session": "~1.0.0"
 }
 ```
 
@@ -80,7 +80,7 @@ $Session->setData('someKey', 'someValue');
 $sessionData = array(
   'feline' => 'cat',
   'canine' => 'dog',
-  'lastModified' => '2015-01-28'
+  'lastModified' => 1422592486
 );
 $Session->setData($sessionData);
 ```

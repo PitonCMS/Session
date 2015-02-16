@@ -30,7 +30,7 @@ use \Exception;
  * Session Handler
  * 
  * Manage http user session state across page views.
- * @version 1.0.0
+ * @version 1.0.1
  */
 class SessionHandler
 {
@@ -435,7 +435,7 @@ class SessionHandler
     }
 
     // Database table name
-    if (isset($config['tableName']) && ctype_alnum($config['tableName'])) {
+    if (isset($config['tableName'])) {
       $this->tableName = $config['tableName'];
     }
 

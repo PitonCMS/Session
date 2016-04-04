@@ -12,4 +12,4 @@ CREATE TABLE IF NOT EXISTS `session` (
   `ip_address` varchar(46) DEFAULT NULL,
   `time_updated` int(11) DEFAULT NULL,
   PRIMARY KEY (`session_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;

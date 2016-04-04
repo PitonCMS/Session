@@ -237,16 +237,11 @@ class SessionHandler
             $stmt->execute(array($this->sessionId));
         }
 
-        // Kill the cookie
-        setcookie(
-            $this->cookieName,
-            '',
-            $this->now - 31500000,
-            '/',
-            null,
-            null,
-            null
-        );
+        // Kill the cookie, every which way
+        // https://www.owasp.org/index.php/PHP_Security_Cheat_Sheet#Proper_Deletion
+        setcookie($this->cookieName, '', 1);
+        setcookie($this->cookieName, false);
+        unset($_COOKIE[$this->cookieName]);
     }
 
     /**

@@ -1,16 +1,22 @@
 #PHP Session Handler
 
-This class maintains user session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is a salted encyrpted hash. The session key is regenerated every 5 minutes, or as set in the configuation file. No information, other than the key, is stored client side. All user session information is kept server side in a database table. 
+This class maintains session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is regenerated every 5 minutes, or as set in the configuation file. No information, other than the key, is stored client side. All user session information is kept server side in a database table.
 
 When the session runs the session handler looks for a session record matching the cookie key, and if found it then runs optional checks to validate the session. If any of the checks fail, or if the session has timed out, the session is destoyed and a new session is started.
 
-Session data can be set and retrieved at any time as either a key (string) value pair, or an array of key-value pairs.
+Session data can be set and retrieved at any time as either a key-value pair, or an array of key-value pairs.
 
 ## Installation
 You can use Composer to install the session handler or just download the files to your project.
 
 ### Using Composer
-Modify your `composer.json` project file to require this package.
+Either require the project in composer,
+
+```sh
+composer require wolfmoritz/session
+```
+
+or modify your `composer.json` project file to require this package and run an update or install.
 
 ```json
 "require": {
@@ -18,8 +24,8 @@ Modify your `composer.json` project file to require this package.
 }
 ```
 
-Then run `composer install`. This will download the files and register the class with the composer autoloader.
- 
+This will download the files and register the class with the composer autoloader.
+
 ### Or Just the Files, Please
 If you do not use Composer, download this project and unzip. The only file you need is `src/Session/SessionHandler.php`. Place that file in your project and be sure to include it in your startup script.
 
@@ -27,7 +33,7 @@ If you do not use Composer, download this project and unzip. The only file you n
 You will need to create the session table in your MySQL database using the **SessionTable.sql** script. You can change the table name in the script if desired, but you will need to provide the table name as a configuration item for `tableName`.
 
 ## Usage
-To use the session handler create a new instance of `SessionHandler` passing in a PDO database connection and the configuration array. 
+To use the session handler create a new instance of `SessionHandler` passing in a PDO database connection and the configuration array.
 
 ### Provide a PDO Connection
 Define a new PDO connection and pass it in as the first argument of the constructor.
@@ -53,6 +59,7 @@ checkIpAddress|false|Whether or not to match the IP address to the stored sessio
 checkUserAgent|false|Whether or not to match the User Agent to the stored session, true or false.
 secureCookie|false|Whether or not to set an encrypted cookie, true of false. Note, this only works when using *https*.
 salt|*none*|Your custom encryption key. Any long (16+ characters) string of characters.
+autoRunSession|true|Whether to run the session automatically, or only needed.
 
 ```php
 $config['salt'] = 'akjfao8ygoa8hba9707lakusdof87';
@@ -67,10 +74,16 @@ Create a new session as part of your application flow.
 $Session = new WolfMoritz\SessionHandler($dbh, $config);
 ```
 
-The session runs immediately and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.
+The session runs immediately if `autoRunSession` is set to true (the default) and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.
+
+When the session runs, it queries the database. If you need to make the session class available but do not need to immediately run the session you can set autoRunSession to false in the configuration. Then when you are ready to run a session call the `run()` method.
+
+```php
+$Session->run();
+```
 
 ### Save Session Data
-Once the session is running, you can add or update session data by passing in key-value pairs or an array of key-value pairs using the `setData()` method. The value can be any type as long as it is serializable.
+Once the session is running, you can add or update session data by passing in key-value pairs or an array of key-value pairs using the `setData()` method. The value can be any type as long as it is serializable to JSON.
 
 ```php
 // Save simple key-value pair
@@ -117,6 +130,6 @@ $Session->destroy();
 ```
 
 # WARNING
-Use this session class at your own risk. Read the code, and understand what it does if you intend on using this for authentication. I make no warranty if something goes wonky. 
+Use this session class at your own risk. Read the code, and understand what it does if you intend on using this for authentication. I make no warranty if something goes wonky.
 
 But, if you have any improvments please fork this project and send me a pull request!

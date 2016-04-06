@@ -29,8 +29,8 @@ use \PDO;
 /**
  * Session Handler
  *
- * Manage http user session state across page views.
- * @version 1.0.1
+ * Manage http session state across page views.
+ * @version 1.1.0
  */
 class SessionHandler
 {
@@ -98,9 +98,14 @@ class SessionHandler
      */
     protected $salt = '';
 
+    /**
+     * Auto-Run Session
+     * @var boolean
+     */
+    protected $autoRunSession = true;
+
     //
     // End Modifiable Configuration Settings
-    // Class Properties Below
     //
 
     /**
@@ -125,7 +130,7 @@ class SessionHandler
      * Data stored by the user.
      * @var array
      */
-    protected $data = array();
+    protected $data = [];
 
     /**
      * Current Unix time
@@ -137,8 +142,8 @@ class SessionHandler
      * Constructor
      *
      * Initialize the session handler.
-     * @param object, PDO Database Connection
-     * @param array, Configuration options
+     * @param object $db PDO Database Connection
+     * @param array $config Configuration options
      * @return void
      */
     public function __construct(PDO $db, array $config)
@@ -146,12 +151,29 @@ class SessionHandler
         // Set database connection handle
         $this->db = $db;
 
-        // Set current time
-        $this->now = time();
-
         // Set session configuration
         $this->setConfig($config);
 
+        // Set current time
+        $this->now = time();
+
+        // Write session data to db on shutdown
+        register_shutdown_function(function () {$this->write();});
+
+        // If auto-run is set, run session
+        if ($this->autoRunSession) {
+            $this->run();
+        }
+    }
+
+    /**
+     * Run Session
+     *
+     * Start session
+     * @return void
+     */
+    public function run()
+    {
         // Run the session
         if (!$this->read()) {
             $this->create();
@@ -166,8 +188,8 @@ class SessionHandler
      * Set Data
      *
      * Set key => value or an array of key => values to the session data array.
-     * @param mixed, session data array or string (key)
-     * @param string, value for single key
+     * @param mixed $newdata Session data array or string (key)
+     * @param string $value Value for single key
      * @return void
      */
     public function setData($newdata, $value = '')
@@ -181,16 +203,13 @@ class SessionHandler
                 $this->data[$key] = $val;
             }
         }
-
-        // Write to session
-        $this->write();
     }
 
     /**
      * Unset Data
      *
      * Unset a specific key from the session data array, or clear the entire array
-     * @param string - session data array key
+     * @param string $key Session data array key
      * @return void
      */
     public function unsetData($key = null)
@@ -202,17 +221,14 @@ class SessionHandler
         if ($key !== null and isset($this->data[$key])) {
             unset($this->data[$key]);
         }
-
-        // Write to session
-        $this->write();
     }
 
     /**
      * Get Data
      *
      * Return a specific key => value or the array of key => values from the session data array.
-     * @param string - session data array key
-     * @return mixed - mixed value or array
+     * @param string $key Session data array key
+     * @return mixed Value or array
      */
     public function getData($key = null)
     {
@@ -295,7 +311,7 @@ class SessionHandler
             }
 
             // Make stored user data available
-            if ($user_data = json_decode($result['data'])) {
+            if ($user_data = json_decode($result['data'], true)) {
                 $this->data = $user_data;
                 unset($user_data);
             }
@@ -342,6 +358,7 @@ class SessionHandler
         // Write session data to database
         $stmt = $this->db->prepare("UPDATE {$this->tableName} SET data = ? WHERE session_id = ?");
         $stmt->execute(array($custom_data, $this->sessionId));
+
     }
 
     /**
@@ -415,7 +432,7 @@ class SessionHandler
      *
      * Set session handler class configuration
      *
-     * @param array, configuration options
+     * @param array $config Configuration options
      * @return void
      */
     private function setConfig(array $config)
@@ -471,6 +488,7 @@ class SessionHandler
         }
 
         // Check user agent?
+        // Hashing HTTP_USER_AGENT only so it stores in a fixed size field
         if (isset($config['checkUserAgent']) && $config['checkUserAgent'] === true) {
             $this->checkUserAgent = true;
             $this->userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? hash('sha256', $_SERVER['HTTP_USER_AGENT']) : 'unknown';
@@ -490,6 +508,11 @@ class SessionHandler
             $this->salt = $config['salt'];
         } else {
             throw new Exception('Session salt encryption key not set');
+        }
+
+        // Auto-Run
+        if (isset($config['autoRunSession'])) {
+            $this->autoRunSession = $config['autoRunSession'];
         }
     }
 }

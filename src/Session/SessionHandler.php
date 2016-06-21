@@ -30,7 +30,7 @@ use \PDO;
  * Session Handler
  *
  * Manage http session state across page views.
- * @version 1.1.0
+ * @version 1.2.0
  */
 class SessionHandler
 {
@@ -133,6 +133,18 @@ class SessionHandler
     protected $data = [];
 
     /**
+     * Flash data from the last request.
+     * @var array
+     */
+    protected $lastFlashData = [];
+
+    /**
+     * Flash data for the next request.
+     * @var array
+     */
+    protected $newFlashData = [];
+
+    /**
      * Current Unix time
      * @var integer
      */
@@ -195,7 +207,7 @@ class SessionHandler
     public function setData($newdata, $value = '')
     {
         if (is_string($newdata)) {
-            $newdata = array($newdata => $value);
+            $newdata = [$newdata => $value];
         }
 
         if (!empty($newdata)) {
@@ -215,7 +227,7 @@ class SessionHandler
     public function unsetData($key = null)
     {
         if ($key === null) {
-            $this->data = array();
+            $this->data = [];
         }
 
         if ($key !== null and isset($this->data[$key])) {
@@ -240,6 +252,42 @@ class SessionHandler
     }
 
     /**
+     * Set Flash Data
+     *
+     * Set flash data that will persist only until next request
+     * @param mixed $newdata Flash data array or string (key)
+     * @param string $value Value for single key
+     */
+    public function setFlashData($newdata, $value = '')
+    {
+        if (is_string($newdata)) {
+            $newdata = [$newdata => $value];
+        }
+
+        if (!empty($newdata)) {
+            foreach ($newdata as $key => $val) {
+                $this->newFlashData[$key] = $val;
+            }
+        }
+    }
+
+    /**
+     * Get Flash Data
+     *
+     * Returns flash data
+     * @param string $key Flsh data array key
+     * @return mixed Value or array
+     */
+    public function getFlashData($key = null)
+    {
+        if ($key === null) {
+            return $this->lastFlashData;
+        }
+
+        return isset($this->lastFlashData[$key]) ? $this->lastFlashData[$key] : null;
+    }
+
+    /**
      * Destroy Session
      *
      * Destroy the current session.
@@ -250,7 +298,7 @@ class SessionHandler
         // Deletes session from the database
         if (isset($this->sessionId)) {
             $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE session_id = ?");
-            $stmt->execute(array($this->sessionId));
+            $stmt->execute([$this->sessionId]);
         }
 
         // Kill the cookie, every which way
@@ -280,7 +328,7 @@ class SessionHandler
 
         // Fetch the session from the database
         $stmt = $this->db->prepare("SELECT data, user_agent, ip_address, time_updated FROM {$this->tableName} WHERE session_id = ?");
-        $stmt->execute(array($this->sessionId));
+        $stmt->execute([$this->sessionId]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -311,9 +359,11 @@ class SessionHandler
             }
 
             // Make stored user data available
-            if ($user_data = json_decode($result['data'], true)) {
-                $this->data = $user_data;
-                unset($user_data);
+            if ($sessionData = json_decode($result['data'], true)) {
+                $this->data = isset($sessionData['data']) ? $sessionData['data'] : [];
+                $this->lastFlashData = isset($sessionData['flash']) ? $sessionData['flash'] : [];
+
+                unset($sessionData);
             }
 
             // We have a valid session
@@ -337,7 +387,7 @@ class SessionHandler
 
         // Insert new session into database
         $stmt = $this->db->prepare("INSERT INTO {$this->tableName} (session_id, user_agent, ip_address, time_updated) VALUES (?, ?, ?, ?)");
-        $stmt->execute(array($this->sessionId, $this->userAgent, $this->ipAddress, $this->now));
+        $stmt->execute([$this->sessionId, $this->userAgent, $this->ipAddress, $this->now]);
     }
 
     /**
@@ -348,16 +398,12 @@ class SessionHandler
      */
     private function write()
     {
-        if (empty($this->data)) {
-            // Custom data does not exist
-            $custom_data = '';
-        } else {
-            $custom_data = json_encode($this->data);
-        }
+        $sessionData['data'] = $this->data;
+        $sessionData['flash'] = $this->newFlashData;
 
         // Write session data to database
         $stmt = $this->db->prepare("UPDATE {$this->tableName} SET data = ? WHERE session_id = ?");
-        $stmt->execute(array($custom_data, $this->sessionId));
+        $stmt->execute([json_encode($sessionData), $this->sessionId]);
 
     }
 
@@ -391,7 +437,7 @@ class SessionHandler
         // 5% chance to clean the database of expired sessions
         if (mt_rand(1, 20) == 1) {
             $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE (time_updated + {$this->secondsUntilExpiration}) < {$this->now}");
-            $stmt->execute(array());
+            $stmt->execute();
         }
     }
 
@@ -424,7 +470,7 @@ class SessionHandler
 
         // Update session ID in the database
         $stmt = $this->db->prepare("UPDATE {$this->tableName} SET time_updated = ?, session_id = ? WHERE session_id = ?");
-        $stmt->execute(array($this->now, $this->sessionId, $oldSessionId));
+        $stmt->execute([$this->now, $this->sessionId, $oldSessionId]);
     }
 
     /**

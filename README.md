@@ -4,7 +4,7 @@ This class maintains session state across page views. A hashed, salted session k
 
 When the session runs the session handler looks for a session record matching the cookie key, and if found it then runs optional checks to validate the session. If any of the checks fail, or if the session has timed out, the session is destoyed and a new session is started.
 
-Session data can be set and retrieved at any time as either a key-value pair, or an array of key-value pairs.
+Session data can be set and retrieved at any time as either a key-value pair, or an array of key-value pairs. Flash data is also supported, which only persists until the next request.
 
 ## Installation
 You can use Composer to install the session handler or just download the files to your project.
@@ -20,7 +20,7 @@ or modify your `composer.json` project file to require this package and run an u
 
 ```json
 "require": {
-  "wolfmoritz/session": "~1.0.0"
+  "wolfmoritz/session": "~1.2.0"
 }
 ```
 
@@ -111,6 +111,26 @@ $value = $Session->getData('someKey');
 $values = $Session->getData();
 ```
 
+### Save Flash Data
+You can add flash data by passing in a string, a key-value pair, or an array of key-value pairs using the `setFlashData()` method. The value can be any type as long as it is serializable to JSON. Flash data will only stay until the next request, after which it is removed automatically.
+
+```php
+// Save simple key-value pair
+$Session->setFlashData('Something went wrong!');
+$Session->setFlashData('alert', 'Something went very wrong!');
+```
+
+### Get Flash Data
+To get flash data pass in the item key to `getFlashData()`. The method returns `null` if no key was found. To get all flash data simply do not provide an argument. Flash data is automatically removed on the next request, so there's no need to explicitly unset flash data.
+
+```php
+// Get one flash item
+$value = $Session->getFlashData('alert');
+
+// Get all flash items
+$values = $Session->getFlashData();
+```
+
 ### Unset Session Data
 You can delete a session item by passing in the item key to `unsetData()`, or delete all session data by not providing an argument.
 
@@ -130,6 +150,6 @@ $Session->destroy();
 ```
 
 # WARNING
-Use this session class at your own risk. Read the code, and understand what it does if you intend on using this for authentication. I make no warranty if something goes wonky.
+Use this session class at your own risk. Read the code, and understand what it does if you intend on using this for for anything secure. I make no warranty if something goes wonky.
 
 But, if you have any improvments please fork this project and send me a pull request!

@@ -1,6 +1,6 @@
 #PHP Session Handler
 
-This class maintains session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is regenerated every 5 minutes, or as set in the configuation file. No information, other than the key, is stored client side. All user session information is kept server side in a database table.
+This class maintains session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is regenerated every 5 minutes or as set in the configuation array. No information, other than the key, is stored client side. All user session information is kept server side in a database table.
 
 When the session runs the session handler looks for a session record matching the cookie key, and if found it then runs optional checks to validate the session. If any of the checks fail, or if the session has timed out, the session is destoyed and a new session is started.
 
@@ -33,7 +33,7 @@ If you do not use Composer, download this project and unzip. The only file you n
 You will need to create the session table in your MySQL database using the **SessionTable.sql** script. You can change the table name in the script if desired, but you will need to provide the table name as a configuration item for `tableName`.
 
 ## Usage
-To use the session handler create a new instance of `SessionHandler` passing in a PDO database connection and the configuration array.
+To use the session handler create a new instance of `WolfMoritz\Session\SessionHandler` passing in a PDO database connection and the configuration array.
 
 ### Provide a PDO Connection
 Define a new PDO connection and pass it in as the first argument of the constructor.
@@ -62,7 +62,7 @@ salt|*none*|Your custom encryption key. Any long (16+ characters) string of char
 autoRunSession|true|Whether to run the session automatically, or only needed.
 
 ```php
-$config['salt'] = 'akjfao8ygoa8hba9707lakusdof87';
+$config['salt'] = 'akjfao8ygoa8hba9707lakusdof87'; // Use your own salt!
 $config['secondsUntilExpiration'] = 1800; // 30 minutes
 // More configuration options ...
 ```
@@ -71,10 +71,10 @@ $config['secondsUntilExpiration'] = 1800; // 30 minutes
 Create a new session as part of your application flow.
 
 ```php
-$Session = new WolfMoritz\SessionHandler($dbh, $config);
+$Session = new WolfMoritz\Session\SessionHandler($dbh, $config);
 ```
 
-The session runs immediately if `autoRunSession` is set to true (the default) and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.
+The session runs immediately if `autoRunSession` is set to true (which is the default) and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.
 
 When the session runs, it queries the database. If you need to make the session class available but do not need to immediately run the session you can set autoRunSession to false in the configuration. Then when you are ready to run a session call the `run()` method.
 
@@ -87,7 +87,7 @@ Once the session is running, you can add or update session data by passing in ke
 
 ```php
 // Save simple key-value pair
-$Session->setData('someKey', 'someValue');
+$Session->setData('lupine', 'wolf');
 
 // Save array of key-value pairs
 $sessionData = array(
@@ -105,7 +105,7 @@ To get session data pass in the item key to `getData()`. The method returns `nul
 
 ```php
 // Get one session item
-$value = $Session->getData('someKey');
+$value = $Session->getData('keyName');
 
 // Get all session items
 $values = $Session->getData();
@@ -136,7 +136,7 @@ You can delete a session item by passing in the item key to `unsetData()`, or de
 
 ```php
 // Delete one session item
-$Session->unsetData('someKey');
+$Session->unsetData('keyName');
 
 // Delete all session data
 $Session->unsetData();

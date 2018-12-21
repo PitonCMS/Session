@@ -1,9 +1,7 @@
 <?php
 /**
- * Piton Session Manager
- *
  * The MIT License (MIT)
- * Copyright (c) 2015 Wolfgang Moritz
+ * Copyright (c) 2015 - 2019 Wolfgang Moritz
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,17 +27,13 @@ use \Exception;
 use \PDO;
 
 /**
- * Session Handler
+ * Piton Session Handler
  *
  * Manage http session state across page views.
  * @version 1.3.0
  */
 class SessionHandler
 {
-    //
-    // Modifiable Configuration Settings
-    //
-
     /**
      * PDO database handle
      * @var PDO connection object
@@ -106,10 +100,6 @@ class SessionHandler
      */
     protected $autoRunSession = true;
 
-    //
-    // End Modifiable Configuration Settings
-    //
-
     /**
      * IP address that will be checked against the database if enabled.
      * @var string
@@ -156,8 +146,8 @@ class SessionHandler
      * Constructor
      *
      * Initialize the session handler.
-     * @param object $db PDO Database Connection
-     * @param array $config Configuration options
+     * @param object $db     PDO Database Connection
+     * @param array  $config Configuration options
      * @return void
      */
     public function __construct(PDO $db, array $config)
@@ -172,7 +162,9 @@ class SessionHandler
         $this->now = time();
 
         // Write session data to db on shutdown
-        register_shutdown_function(function () {$this->write();});
+        register_shutdown_function(function () {
+            $this->write();
+        });
 
         // If auto-run is set, run session
         if ($this->autoRunSession) {
@@ -202,8 +194,8 @@ class SessionHandler
      * Set Data
      *
      * Set key => value or an array of key => values to the session data array.
-     * @param mixed $newdata Session data array or string (key)
-     * @param string $value Value for single key
+     * @param mixed  $newdata  Session data array or string (key)
+     * @param string $value    Value for single key
      * @return void
      */
     public function setData($newdata, $value = '')
@@ -242,7 +234,7 @@ class SessionHandler
      *
      * Return a specific key => value or the array of key => values from the session data array.
      * @param string $key Session data array key
-     * @return mixed Value or array
+     * @return mixed      Value or array, default null
      */
     public function getData($key = null)
     {
@@ -257,8 +249,8 @@ class SessionHandler
      * Set Flash Data
      *
      * Set flash data that will persist only until next request
-     * @param mixed $newdata Flash data array or string (key)
-     * @param string $value Value for single key
+     * @param mixed  $newdata Flash data array or string (key)
+     * @param string $value   Value for single key
      */
     public function setFlashData($newdata, $value = '')
     {
@@ -278,7 +270,7 @@ class SessionHandler
      *
      * Returns flash data
      * @param string $key Flsh data array key
-     * @return mixed Value or array
+     * @return mixed      Value or array
      */
     public function getFlashData($key = null)
     {
@@ -303,7 +295,7 @@ class SessionHandler
             $stmt->execute([$this->sessionId]);
         }
 
-        // Kill the cookie, every which way
+        // Kill the cookie, every possible way
         // https://www.owasp.org/index.php/PHP_Security_Cheat_Sheet#Proper_Deletion
         setcookie($this->cookieName, '', 1);
         setcookie($this->cookieName, false);
@@ -336,7 +328,6 @@ class SessionHandler
 
         // Run validations if a session exists
         if ($result !== false && !empty($result)) {
-
             // Check if the session has expired in the database
             if ($this->expireOnClose === false && ($result['time_updated'] + $this->secondsUntilExpiration) < $this->now) {
                 $this->destroy();
@@ -350,7 +341,7 @@ class SessionHandler
             }
 
             // Check if the user agent matches the one saved in the database
-            if ($this->userAgent === true && $result['user_agent'] !== $this->userAgent) {
+            if ($this->checkUserAgent === true && $result['user_agent'] !== $this->userAgent) {
                 $this->destroy();
                 return false;
             }
@@ -406,7 +397,6 @@ class SessionHandler
         // Write session data to database
         $stmt = $this->db->prepare("UPDATE {$this->tableName} SET data = ? WHERE session_id = ?");
         $stmt->execute([json_encode($sessionData), $this->sessionId]);
-
     }
 
     /**
@@ -436,9 +426,10 @@ class SessionHandler
      */
     private function cleanExpired()
     {
-        // 5% chance to clean the database of expired sessions
-        if (mt_rand(1, 20) == 1) {
-            $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE (time_updated + {$this->secondsUntilExpiration}) < {$this->now}");
+        // 10% chance to clean the database of expired sessions
+        if (mt_rand(1, 10) == 1) {
+            $expiredTime = $this->now - $this->secondsUntilExpiration;
+            $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE time_updated < {$expiredTime}");
             $stmt->execute();
         }
     }
@@ -488,7 +479,7 @@ class SessionHandler
         // Cookie name
         if (isset($config['cookieName'])) {
             if (!ctype_alnum($config['cookieName'])) {
-                throw new Exception('Invalid cookie name provided.');
+                throw new \Exception('Invalid cookie name provided.');
             }
 
             $this->cookieName = $config['cookieName'];
@@ -503,7 +494,7 @@ class SessionHandler
         if (isset($config['secondsUntilExpiration'])) {
             // Anything else than digits?
             if (!is_int($config['secondsUntilExpiration']) || $config['secondsUntilExpiration'] <= 0) {
-                throw new Exception('Seconds until expiration must be a positive non-zero integer.');
+                throw new \Exception('Seconds until expiration must be a positive non-zero integer.');
             }
 
             $this->secondsUntilExpiration = (int) $config['secondsUntilExpiration'];
@@ -513,7 +504,7 @@ class SessionHandler
         if (isset($config['renewalTime'])) {
             // Anything else than digits?
             if (!is_int($config['renewalTime']) || $config['renewalTime'] <= 0) {
-                throw new Exception('Session renewal time must be a valid non-zero integer.');
+                throw new \Exception('Session renewal time must be a valid non-zero integer.');
             }
 
             $this->renewalTime = (int) $config['renewalTime'];
@@ -523,7 +514,7 @@ class SessionHandler
         if (isset($config['expireOnClose'])) {
             // Not true or false?
             if (!is_bool($config['expireOnClose'])) {
-                throw new Exception('Expire on close must be either true or false.');
+                throw new \Exception('Expire on close must be either true or false.');
             }
 
             $this->expireOnClose = $config['expireOnClose'];
@@ -539,13 +530,13 @@ class SessionHandler
         // Hashing HTTP_USER_AGENT only so it stores in a fixed size field
         if (isset($config['checkUserAgent']) && $config['checkUserAgent'] === true) {
             $this->checkUserAgent = true;
-            $this->userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? hash('sha256', $_SERVER['HTTP_USER_AGENT']) : 'unknown';
+            $this->userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 64) : 'unknown';
         }
 
         // Send cookie only when HTTPS is enabled?
         if (isset($config['secureCookie'])) {
             if (!is_bool($config['secureCookie'])) {
-                throw new Exception('The secure cookie option must be either true or false.');
+                throw new \Exception('The secure cookie option must be either true or false.');
             }
 
             $this->secureCookie = $config['secureCookie'];
@@ -555,7 +546,7 @@ class SessionHandler
         if (isset($config['salt'])) {
             $this->salt = $config['salt'];
         } else {
-            throw new Exception('Session salt encryption key not set');
+            throw new \Exception('Session salt encryption key not set');
         }
 
         // Auto-Run

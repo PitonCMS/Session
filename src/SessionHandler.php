@@ -6,7 +6,7 @@
  * @copyright Copyright (c) 2015 - 2019 Wolfgang Moritz
  * @license   https://github.com/PitonCMS/Session/blob/master/LICENSE (MIT License)
  */
-namespace WolfMoritz\Session;
+namespace Piton\Session;
 
 use \Exception;
 use \PDO;

@@ -1,5 +1,7 @@
 <?php
 /**
+ * Piton Session Manager
+ *
  * The MIT License (MIT)
  * Copyright (c) 2015 Wolfgang Moritz
  *
@@ -21,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-namespace WolfMoritz\Session;
+namespace Piton\Session;
 
 use \Exception;
 use \PDO;
@@ -30,7 +32,7 @@ use \PDO;
  * Session Handler
  *
  * Manage http session state across page views.
- * @version 1.2.0
+ * @version 1.3.0
  */
 class SessionHandler
 {

@@ -1,10 +1,10 @@
 {
-    "name": "wolfmoritz/session",
+    "name": "pitoncms/session",
     "description": "Manage session state without native PHP sessions",
     "type": "library",
     "license": "MIT",
-    "homepage": "https://github.com/wolfmoritz/session",
-    "keywords": ["session"],
+    "homepage": "https://github.com/pitoncms/session",
+    "keywords": ["piton","pitoncms","session","sessions","sessionstate"],
     "authors": [
         {
             "name": "Wolfgang Moritz",
@@ -16,7 +16,7 @@
         },
     "autoload": {
         "psr-4": {
-            "WolfMoritz\\Session\\": "src\\Session"
+            "Piton\\Session\\": "src"
         }
     }
 }

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `session` (
   `data` text,
   `user_agent` char(64) DEFAULT NULL,
   `ip_address` varchar(46) DEFAULT NULL,
-  `time_updated` int(11) DEFAULT NULL,
-  PRIMARY KEY (`session_id`)
+  `time_updated` int DEFAULT NULL,
+  PRIMARY KEY (`session_id`),
+  KEY `time_updated_idx` (`time_updated`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;

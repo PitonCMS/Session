@@ -1,8 +1,8 @@
-# PHP Session Handler
+# Piton Session Handler
 
 This class maintains session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is regenerated every 5 minutes or as set in the configuation array. No information, other than the key, is stored client side. All user session information is kept server side in a database table.
 
-When the session runs the session handler looks for a session record matching the cookie key, and if found it then runs optional checks to validate the session. If any of the checks fail, or if the session has timed out, the session is destoyed and a new session is started.
+When the session starts the session handler looks for a session record matching the cookie key, and if found then runs optional checks to validate the session. If any of the checks fail, or if the session has timed out, the session is destoyed and a new session is started.
 
 Session data can be set and retrieved at any time as either a key-value pair, or an array of key-value pairs. Flash data is also supported, which only persists until the next request.
 
@@ -13,27 +13,27 @@ You can use Composer to install the session handler or just download the files t
 Either require the project in composer,
 
 ```sh
-composer require wolfmoritz/session
+composer require pitoncms/session
 ```
 
 or modify your `composer.json` project file to require this package and run an update or install.
 
 ```json
 "require": {
-  "wolfmoritz/session": "~1.2.0"
+  "pitoncms/session": "^1.3"
 }
 ```
 
 This will download the files and register the class with the composer autoloader.
 
 ### Or Just the Files, Please
-If you do not use Composer, download this project and unzip. The only file you need is `src/Session/SessionHandler.php`. Place that file in your project and be sure to include it in your startup script.
+If you do not use Composer, download this project and unzip. The only file you need is `src/SessionHandler.php`. Place that file in your project and be sure to include it in your startup script.
 
 ### Create the Table
 You will need to create the session table in your MySQL database using the **SessionTable.sql** script. You can change the table name in the script if desired, but you will need to provide the table name as a configuration item for `tableName`.
 
 ## Usage
-To use the session handler create a new instance of `WolfMoritz\Session\SessionHandler` passing in a PDO database connection and the configuration array.
+To use the session handler create a new instance of `Piton\Session\SessionHandler` passing in a PDO database connection and the configuration array.
 
 ### Provide a PDO Connection
 Define a new PDO connection and pass it in as the first argument of the constructor.
@@ -62,8 +62,8 @@ salt|*none*|Your custom encryption key. Any long (16+ characters) string of char
 autoRunSession|true|Whether to run the session automatically, or only needed.
 
 ```php
-$config['salt'] = 'akjfao8ygoa8hba9707lakusdof87'; // Use your own salt!
-$config['secondsUntilExpiration'] = 1800; // 30 minutes
+$config['salt'] = 'akjfao8ygoa8hba9707lakusdof87'; // Use your own salt, not this one!
+$config['secondsUntilExpiration'] = 1800; // 30 minutes. Can also use 60*60*24 to specify 1 day
 // More configuration options ...
 ```
 
@@ -71,7 +71,7 @@ $config['secondsUntilExpiration'] = 1800; // 30 minutes
 Create a new session as part of your application flow.
 
 ```php
-$Session = new WolfMoritz\Session\SessionHandler($dbh, $config);
+$Session = new Piton\Session\SessionHandler($dbh, $config);
 ```
 
 The session runs immediately if `autoRunSession` is set to true (which is the default) and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.
@@ -150,6 +150,4 @@ $Session->destroy();
 ```
 
 # WARNING
-Use this session class at your own risk. Read the code, and understand what it does if you intend on using this for for anything secure. I make no warranty if something goes wonky.
-
-But, if you have any improvments please fork this project and send me a pull request!
+Use this session class at your own risk. Read the code, and understand what it does if you intend on using this for for anything secure. We make no warranty if something goes wonky.

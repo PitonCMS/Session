@@ -224,7 +224,7 @@ class SessionHandler
     public function getData($key = null)
     {
         if ($key === null) {
-            return ($this->data) ? $this->data : null;
+            return $this->data;
         }
 
         return isset($this->data[$key]) ? $this->data[$key] : null;
@@ -254,7 +254,7 @@ class SessionHandler
      * Get Flash Data
      *
      * Returns flash data
-     * @param string $key Flsh data array key
+     * @param string $key Flash data array key
      * @return mixed      Value or array
      */
     public function getFlashData($key = null)

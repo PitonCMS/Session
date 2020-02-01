@@ -1,11 +1,15 @@
 <?php
+
 /**
  * PitonCMS (https://github.com/PitonCMS)
  *
  * @link      https://github.com/PitonCMS
- * @copyright Copyright (c) 2015 - 2019 Wolfgang Moritz
+ * @copyright Copyright (c) 2015 - 2020 Wolfgang Moritz
  * @license   https://github.com/PitonCMS/Session/blob/master/LICENSE (MIT License)
  */
+
+declare(strict_types=1);
+
 namespace Piton\Session;
 
 use Exception;
@@ -15,7 +19,7 @@ use PDO;
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 1.3.1
+ * @version 2.0.0
  */
 class SessionHandler
 {
@@ -51,25 +55,25 @@ class SessionHandler
 
     /**
      * Whether to kill the session when the browser is closed
-     * @var boolean
+     * @var bool
      */
     protected $expireOnClose = false;
 
     /**
      * Whether to check IP address in validating session ID
-     * @var boolean
+     * @var bool
      */
     protected $checkIpAddress = false;
 
     /**
      * Whether to check the user agent in validating a session
-     * @var boolean
+     * @var bool
      */
     protected $checkUserAgent = false;
 
     /**
      * Will only set the session cookie if a secure HTTPS connection is being used
-     * @var boolean
+     * @var bool
      */
     protected $secureCookie = false;
 
@@ -81,7 +85,7 @@ class SessionHandler
 
     /**
      * Auto-Run Session
-     * @var boolean
+     * @var bool
      */
     protected $autoRunSession = true;
 
@@ -161,9 +165,10 @@ class SessionHandler
      * Run Session
      *
      * Start session
+     * @param void
      * @return void
      */
-    public function run()
+    public function run(): void
     {
         // Run the session
         if (!$this->read()) {
@@ -183,7 +188,7 @@ class SessionHandler
      * @param string $value    Value for single key
      * @return void
      */
-    public function setData($newdata, $value = '')
+    public function setData($newdata, $value = ''): void
     {
         if (is_string($newdata)) {
             $newdata = [$newdata => $value];
@@ -203,13 +208,13 @@ class SessionHandler
      * @param string $key Session data array key
      * @return void
      */
-    public function unsetData($key = null)
+    public function unsetData($key = null): void
     {
         if ($key === null) {
             $this->data = [];
         }
 
-        if ($key !== null and isset($this->data[$key])) {
+        if ($key !== null && isset($this->data[$key])) {
             unset($this->data[$key]);
         }
     }
@@ -227,7 +232,7 @@ class SessionHandler
             return $this->data;
         }
 
-        return isset($this->data[$key]) ? $this->data[$key] : null;
+        return $this->data[$key] ?? null;
     }
 
     /**
@@ -236,8 +241,9 @@ class SessionHandler
      * Set flash data that will persist only until next request
      * @param mixed  $newdata Flash data array or string (key)
      * @param string $value   Value for single key
+     * @return void
      */
-    public function setFlashData($newdata, $value = '')
+    public function setFlashData($newdata, $value = ''): void
     {
         if (is_string($newdata)) {
             $newdata = [$newdata => $value];
@@ -263,7 +269,7 @@ class SessionHandler
             return $this->lastFlashData;
         }
 
-        return isset($this->lastFlashData[$key]) ? $this->lastFlashData[$key] : null;
+        return $this->lastFlashData[$key] ?? null;
     }
 
     /**
@@ -291,12 +297,12 @@ class SessionHandler
      * Read Session
      *
      * Loads and validates current session from database
-     * @return boolean
+     * @return bool
      */
-    private function read()
+    private function read(): bool
     {
         // Fetch session cookie
-        $sessionId = isset($_COOKIE[$this->cookieName]) ? $_COOKIE[$this->cookieName] : false;
+        $sessionId = $_COOKIE[$this->cookieName] ?? false;
 
         // Cookie does not exist
         if (!$sessionId) {
@@ -338,8 +344,8 @@ class SessionHandler
 
             // Make stored user data available
             if ($sessionData = json_decode($result['data'], true)) {
-                $this->data = isset($sessionData['data']) ? $sessionData['data'] : [];
-                $this->lastFlashData = isset($sessionData['flash']) ? $sessionData['flash'] : [];
+                $this->data = $sessionData['data'] ?? [];
+                $this->lastFlashData = $sessionData['flash'] ?? [];
 
                 unset($sessionData);
             }
@@ -348,7 +354,7 @@ class SessionHandler
             return true;
         }
 
-        // No session found
+        // Fall back is failure
         return false;
     }
 
@@ -358,7 +364,7 @@ class SessionHandler
      * Creates a new ession
      * @return void
      */
-    private function create()
+    private function create(): void
     {
         // Generate session ID
         $this->sessionId = $this->generateId();
@@ -374,7 +380,7 @@ class SessionHandler
      * Writes session data to the database.
      * @return void
      */
-    private function write()
+    private function write(): void
     {
         $sessionData['data'] = $this->data;
         $sessionData['flash'] = $this->newFlashData;
@@ -390,16 +396,19 @@ class SessionHandler
      * Set session cookie
      * @return void
      */
-    private function setCookie()
+    private function setCookie(): void
     {
         setcookie(
             $this->cookieName,
             $this->sessionId,
-            ($this->expireOnClose) ? 0 : $this->now + $this->secondsUntilExpiration,
-            '/',
-            null,
-            $this->secureCookie,
-            true
+            [
+                'expires' => ($this->expireOnClose) ? 0 : $this->now + $this->secondsUntilExpiration,
+                'path' => '/',
+                'domain' => getenv('HTTP_HOST'),
+                'secure' => $this->secureCookie,
+                'httponly' => true,
+                'samesite' => 'Strict'
+            ]
         );
     }
 
@@ -409,7 +418,7 @@ class SessionHandler
      * Removes expired sessions from the database
      * @return void
      */
-    private function cleanExpired()
+    private function cleanExpired(): void
     {
         // 10% chance to clean the database of expired sessions
         if (mt_rand(1, 10) == 1) {
@@ -425,7 +434,7 @@ class SessionHandler
      * Create a unique session ID
      * @return string
      */
-    private function generateId()
+    private function generateId(): string
     {
         $randomNumber = mt_rand(0, mt_getrandmax());
         $ipAddressFragment = md5(substr($this->ipAddress, 0, 5));
@@ -440,7 +449,7 @@ class SessionHandler
      * Regenerates a new session ID for the current session.
      * @return void
      */
-    private function regenerateId()
+    private function regenerateId(): void
     {
         // Acquire a new session ID
         $oldSessionId = $this->sessionId;
@@ -459,7 +468,7 @@ class SessionHandler
      * @param array $config Configuration options
      * @return void
      */
-    private function setConfig(array $config)
+    private function setConfig(array $config): void
     {
         // Cookie name
         if (isset($config['cookieName'])) {
@@ -508,11 +517,11 @@ class SessionHandler
         // Check IP addresses?
         if (isset($config['checkIpAddress']) && $config['checkIpAddress'] === true) {
             $this->checkIpAddress = true;
-            $this->ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
+            $this->ipAddress = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         }
 
         // Check user agent?
-        // Hashing HTTP_USER_AGENT only so it stores in a fixed size field
+        // Truncate HTTP_USER_AGENT so it stores in a 64 CHAR size field
         if (isset($config['checkUserAgent']) && $config['checkUserAgent'] === true) {
             $this->checkUserAgent = true;
             $this->userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 64) : 'unknown';

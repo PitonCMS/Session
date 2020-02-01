@@ -407,7 +407,7 @@ class SessionHandler
                 'domain' => getenv('HTTP_HOST'),
                 'secure' => $this->secureCookie,
                 'httponly' => true,
-                'samesite' => 'Strict'
+                'samesite' => 'Lax'
             ]
         );
     }

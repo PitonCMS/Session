@@ -8,14 +8,14 @@
  */
 namespace Piton\Session;
 
-use \Exception;
-use \PDO;
+use Exception;
+use PDO;
 
 /**
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 1.3.0
+ * @version 1.3.1
  */
 class SessionHandler
 {
@@ -464,7 +464,7 @@ class SessionHandler
         // Cookie name
         if (isset($config['cookieName'])) {
             if (!ctype_alnum($config['cookieName'])) {
-                throw new \Exception('Invalid cookie name provided.');
+                throw new Exception('PitonCMS: Invalid cookie name provided.');
             }
 
             $this->cookieName = $config['cookieName'];
@@ -479,7 +479,7 @@ class SessionHandler
         if (isset($config['secondsUntilExpiration'])) {
             // Anything else than digits?
             if (!is_int($config['secondsUntilExpiration']) || $config['secondsUntilExpiration'] <= 0) {
-                throw new \Exception('Seconds until expiration must be a positive non-zero integer.');
+                throw new Exception('PitonCMS: Seconds until expiration must be a positive non-zero integer.');
             }
 
             $this->secondsUntilExpiration = (int) $config['secondsUntilExpiration'];
@@ -489,7 +489,7 @@ class SessionHandler
         if (isset($config['renewalTime'])) {
             // Anything else than digits?
             if (!is_int($config['renewalTime']) || $config['renewalTime'] <= 0) {
-                throw new \Exception('Session renewal time must be a valid non-zero integer.');
+                throw new Exception('PitonCMS: Session renewal time must be a valid non-zero integer.');
             }
 
             $this->renewalTime = (int) $config['renewalTime'];
@@ -499,7 +499,7 @@ class SessionHandler
         if (isset($config['expireOnClose'])) {
             // Not true or false?
             if (!is_bool($config['expireOnClose'])) {
-                throw new \Exception('Expire on close must be either true or false.');
+                throw new Exception('PitonCMS: Expire on close must be either true or false.');
             }
 
             $this->expireOnClose = $config['expireOnClose'];
@@ -521,7 +521,7 @@ class SessionHandler
         // Send cookie only when HTTPS is enabled?
         if (isset($config['secureCookie'])) {
             if (!is_bool($config['secureCookie'])) {
-                throw new \Exception('The secure cookie option must be either true or false.');
+                throw new Exception('PitonCMS: The secure cookie option must be either true or false.');
             }
 
             $this->secureCookie = $config['secureCookie'];
@@ -531,7 +531,7 @@ class SessionHandler
         if (isset($config['salt'])) {
             $this->salt = $config['salt'];
         } else {
-            throw new \Exception('Session salt encryption key not set');
+            throw new Exception('PitonCMS: Session salt encryption key not set');
         }
 
         // Auto-Run

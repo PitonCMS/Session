@@ -19,7 +19,7 @@ use PDO;
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 2.0.0
+ * @version 2.0.2
  */
 class SessionHandler
 {
@@ -286,10 +286,8 @@ class SessionHandler
             $stmt->execute([$this->sessionId]);
         }
 
-        // Kill the cookie, every possible way
-        // https://www.owasp.org/index.php/PHP_Security_Cheat_Sheet#Proper_Deletion
-        setcookie($this->cookieName, '', 1);
-        setcookie($this->cookieName, false);
+        // Kill the cookie
+        setcookie($this->cookieName, '', time() - 3600);
         unset($_COOKIE[$this->cookieName]);
     }
 

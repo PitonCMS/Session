@@ -14,12 +14,13 @@ namespace Piton\Session;
 
 use Exception;
 use PDO;
+use Psr\Log\LoggerInterface;
 
 /**
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 2.0.2
+ * @version 2.1.0
  */
 class SessionHandler
 {
@@ -28,6 +29,12 @@ class SessionHandler
      * @var PDO connection object
      */
     protected $db = null;
+
+    /**
+     * Logger
+     * @var Psr\Log\LoggerInterface
+     */
+    protected $log;
 
     /**
      * Cookie name
@@ -172,12 +179,14 @@ class SessionHandler
     {
         // Run the session
         if (!$this->read()) {
+            if ($this->log) {
+                $this->log->info('PitonSession: Create new session');
+            }
             $this->create();
         }
 
         // Clean expired sessions and set cookie
         $this->cleanExpired();
-        $this->setCookie();
     }
 
     /**
@@ -280,6 +289,10 @@ class SessionHandler
      */
     public function destroy()
     {
+        if ($this->log) {
+            $this->log->info("PitonSession: Deleting session {$this->sessionId}");
+        }
+
         // Deletes session from the database
         if (isset($this->sessionId)) {
             $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE session_id = ?");
@@ -302,6 +315,10 @@ class SessionHandler
         // Fetch session cookie
         $sessionId = $_COOKIE[$this->cookieName] ?? false;
 
+        if ($this->log) {
+            $this->log->info("PitonSession: Reading session from cookie $sessionId");
+        }
+
         // Cookie does not exist
         if (!$sessionId) {
             return false;
@@ -317,26 +334,38 @@ class SessionHandler
 
         // Run validations if a session exists
         if ($result !== false && !empty($result)) {
-            // Check if the session has expired in the database
+            // Check if the session has expired in the database. The cookie should have expired so this will likely not run...
             if ($this->expireOnClose === false && ($result['time_updated'] + $this->secondsUntilExpiration) < $this->now) {
+                if ($this->log) {
+                    $this->log->info("PitonSession: Session out of date. Time updated {$result['time_updated']}. Duration {$this->secondsUntilExpiratio}. Now {$this->now}");
+                }
                 $this->destroy();
                 return false;
             }
 
             // Check if the IP address matches the one saved in the database
             if ($this->checkIpAddress === true && $result['ip_address'] !== $this->ipAddress) {
+                if ($this->log) {
+                    $this->log->info("PitonSession: Saved IP address {$result['ip_address']} does not match client IP {$this->ipAddress}");
+                }
                 $this->destroy();
                 return false;
             }
 
             // Check if the user agent matches the one saved in the database
             if ($this->checkUserAgent === true && $result['user_agent'] !== $this->userAgent) {
+                if ($this->log) {
+                    $this->log->info("PitonSession: Saved user agent {$result['user_agent']} does not match client agent {$this->userAgent}");
+                }
                 $this->destroy();
                 return false;
             }
 
             // Is it time to regenerate the session ID?
             if (($result['time_updated'] + $this->renewalTime) < $this->now) {
+                if ($this->log) {
+                    $this->log->info("PitonSession: Time to regenerate session ID");
+                }
                 $this->regenerateId();
             }
 
@@ -349,7 +378,15 @@ class SessionHandler
             }
 
             // We have a valid session
+            if ($this->log) {
+                $this->log->info("PitonSession: Valid session found");
+            }
+
             return true;
+        }
+
+        if ($this->log) {
+            $this->log->info("PitonSession: No session found in table");
         }
 
         // Fall back is failure
@@ -367,9 +404,16 @@ class SessionHandler
         // Generate session ID
         $this->sessionId = $this->generateId();
 
+        if ($this->log) {
+            $this->log->info("PitonSession: Generating and saving new sesion ID {$this->sessionId}");
+        }
+
         // Insert new session into database
         $stmt = $this->db->prepare("INSERT INTO {$this->tableName} (session_id, user_agent, ip_address, time_updated) VALUES (?, ?, ?, ?)");
         $stmt->execute([$this->sessionId, $this->userAgent, $this->ipAddress, $this->now]);
+
+        // Set matching cookie
+        $this->setCookie();
     }
 
     /**
@@ -396,6 +440,10 @@ class SessionHandler
      */
     private function setCookie(): void
     {
+        if ($this->log) {
+            $this->log->info("PitonSession: Setting cookie {$this->cookieName} | {$this->sessionId}");
+        }
+
         setcookie(
             $this->cookieName,
             $this->sessionId,
@@ -420,6 +468,10 @@ class SessionHandler
     {
         // 10% chance to clean the database of expired sessions
         if (mt_rand(1, 10) == 1) {
+            if ($this->log) {
+                $this->log->info("PitonSession: Cleaning expired sessions");
+            }
+
             $expiredTime = $this->now - $this->secondsUntilExpiration;
             $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE time_updated < {$expiredTime}");
             $stmt->execute();
@@ -452,6 +504,10 @@ class SessionHandler
         // Acquire a new session ID
         $oldSessionId = $this->sessionId;
         $this->sessionId = $this->generateId();
+
+        if ($this->log) {
+            $this->log->info("PitonSession: New session ID {$this->sessionId}");
+        }
 
         // Update session ID in the database
         $stmt = $this->db->prepare("UPDATE {$this->tableName} SET time_updated = ?, session_id = ? WHERE session_id = ?");
@@ -544,6 +600,11 @@ class SessionHandler
         // Auto-Run
         if (isset($config['autoRunSession'])) {
             $this->autoRunSession = $config['autoRunSession'];
+        }
+
+        // Is a logger provided?
+        if (isset($config['log']) && $config['log'] instanceof LoggerInterface) {
+            $this->log = $config['log'];
         }
     }
 }

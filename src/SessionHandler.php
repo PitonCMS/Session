@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 2.1.0
+ * @version 2.1.1
  */
 class SessionHandler
 {
@@ -185,7 +185,7 @@ class SessionHandler
             $this->create();
         }
 
-        // Clean expired sessions and set cookie
+        // Clean expired sessions
         $this->cleanExpired();
     }
 
@@ -512,6 +512,9 @@ class SessionHandler
         // Update session ID in the database
         $stmt = $this->db->prepare("UPDATE {$this->tableName} SET time_updated = ?, session_id = ? WHERE session_id = ?");
         $stmt->execute([$this->now, $this->sessionId, $oldSessionId]);
+
+        // Set cookie with new name
+        $this->setCookie();
     }
 
     /**

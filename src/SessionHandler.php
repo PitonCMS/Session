@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 2.1.2
+ * @version 2.1.3
  */
 class SessionHandler
 {
@@ -299,8 +299,8 @@ class SessionHandler
             $stmt->execute([$this->sessionId]);
         }
 
-        // Kill the cookie
-        setcookie($this->cookieName, '', time() - 3600);
+        // Kill the cookie by setting the value to false, and expires to one year ago
+        $this->setCookie(false, time() - 60*60*24*365);
         unset($_COOKIE[$this->cookieName]);
     }
 
@@ -310,7 +310,7 @@ class SessionHandler
      * Loads and validates current session from database
      * @return bool
      */
-    private function read(): bool
+    protected function read(): bool
     {
         // Fetch session cookie
         $sessionId = $_COOKIE[$this->cookieName] ?? false;
@@ -399,7 +399,7 @@ class SessionHandler
      * Creates a new ession
      * @return void
      */
-    private function create(): void
+    protected function create(): void
     {
         // Generate session ID
         $this->sessionId = $this->generateId();
@@ -422,7 +422,7 @@ class SessionHandler
      * Writes session data to the database.
      * @return void
      */
-    private function write(): void
+    protected function write(): void
     {
         $sessionData['data'] = $this->data;
         $sessionData['flash'] = $this->newFlashData;
@@ -436,19 +436,24 @@ class SessionHandler
      * Set Cookie
      *
      * Set session cookie
+     * @param  mixed $value   Cookie value, defaults to $this->cookieName
+     * @param  int   $expires Life of cookie, defaults to now + $this->secondsUntilExpiration
      * @return void
      */
-    private function setCookie(): void
+    protected function setCookie($value = null, int $expires = null): void
     {
+        $value = $value ?? $this->sessionId;
+        $expires = $expires ?? ($this->expireOnClose) ? 0 : $this->now + $this->secondsUntilExpiration;
         if ($this->log) {
-            $this->log->info("PitonSession: Setting cookie {$this->cookieName} | {$this->sessionId}");
+            $expiresDate = date('c', $expires);
+            $this->log->info("PitonSession: Setting cookie '{$this->cookieName}', value $value, until $expiresDate");
         }
 
-        setcookie(
+        $cookieSet = setcookie(
             $this->cookieName,
-            $this->sessionId,
+            $value,
             [
-                'expires' => ($this->expireOnClose) ? 0 : $this->now + $this->secondsUntilExpiration,
+                'expires' => $expires,
                 'path' => '/',
                 'domain' => getenv('HTTP_HOST'),
                 'secure' => $this->secureCookie,
@@ -456,6 +461,12 @@ class SessionHandler
                 'samesite' => 'Lax'
             ]
         );
+
+        // Log outcome of trying to set cookie
+        if ($this->log) {
+            $cookieSet = ($cookieSet) ? 'true' : 'false';
+            $this->log->info("PitonSession: Set cookie status $cookieSet");
+        }
     }
 
     /**
@@ -464,7 +475,7 @@ class SessionHandler
      * Removes expired sessions from the database
      * @return void
      */
-    private function cleanExpired(): void
+    protected function cleanExpired(): void
     {
         // 10% chance to clean the database of expired sessions
         if (mt_rand(1, 10) == 1) {
@@ -484,7 +495,7 @@ class SessionHandler
      * Create a unique session ID
      * @return string
      */
-    private function generateId(): string
+    protected function generateId(): string
     {
         $randomNumber = mt_rand(0, mt_getrandmax());
         $ipAddressFragment = md5(substr($this->ipAddress, 0, 5));
@@ -499,7 +510,7 @@ class SessionHandler
      * Regenerates a new session ID for the current session.
      * @return void
      */
-    private function regenerateId(): void
+    protected function regenerateId(): void
     {
         // Acquire a new session ID
         $oldSessionId = $this->sessionId;
@@ -525,7 +536,7 @@ class SessionHandler
      * @param array $config Configuration options
      * @return void
      */
-    private function setConfig(array $config): void
+    protected function setConfig(array $config): void
     {
         // Cookie name
         if (isset($config['cookieName'])) {
@@ -584,7 +595,8 @@ class SessionHandler
             $this->userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 64) : 'unknown';
         }
 
-        // Send cookie only when HTTPS is enabled?
+        // Set secure cookie to false, but override setting if provided explicitly
+        $this->secureCookie = false;
         if (isset($config['secureCookie'])) {
             if (!is_bool($config['secureCookie'])) {
                 throw new Exception('PitonSession: The secure cookie option must be either true or false.');

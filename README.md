@@ -57,7 +57,7 @@ renewalTime|300|How long before the session key is regenerated in seconds.
 expireOnClose|false|Whether or not to destroy the session when the browser closes, true or false.
 checkIpAddress|false|Whether or not to match the IP address to the stored session, true or false.
 checkUserAgent|false|Whether or not to match the User Agent to the stored session, true or false.
-secureCookie|false|Whether or not to set an encrypted cookie, true of false. Note, this only works when using *https*.
+secureCookie|false|Whether or not to set cookie when on an HTTPS connection, true or false.
 salt|*none*|Your custom encryption key. Any long (16+ characters) string of characters.
 autoRunSession|true|Whether to run the session automatically, or only needed.
 

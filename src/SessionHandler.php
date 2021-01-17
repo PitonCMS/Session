@@ -4,7 +4,7 @@
  * PitonCMS (https://github.com/PitonCMS)
  *
  * @link      https://github.com/PitonCMS
- * @copyright Copyright (c) 2015 - 2020 Wolfgang Moritz
+ * @copyright Copyright 2015 Wolfgang Moritz
  * @license   https://github.com/PitonCMS/Session/blob/master/LICENSE (MIT License)
  */
 
@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 2.1.3
+ * @version 2.1.4
  */
 class SessionHandler
 {
@@ -299,8 +299,8 @@ class SessionHandler
             $stmt->execute([$this->sessionId]);
         }
 
-        // Kill the cookie by setting the value to false, and expires to one year ago
-        $this->setCookie(false, time() - 60*60*24*365);
+        // Kill the cookie by setting the value to empty, and expires to one year ago
+        $this->setCookie('0', time() - 60*60*24*365);
         unset($_COOKIE[$this->cookieName]);
     }
 

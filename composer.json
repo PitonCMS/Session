@@ -1,10 +1,10 @@
 {
     "name": "pitoncms/session",
-    "description": "Manage session state without native PHP sessions",
+    "description": "Manage HTTP session state without native PHP sessions",
     "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/pitoncms/session",
-    "keywords": ["piton","pitoncms","session","sessions","sessionstate"],
+    "keywords": ["piton","pitoncms","session","sessions","session state"],
     "authors": [
         {
             "name": "Wolfgang Moritz",
@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "php": ">=7.1"
+        "php": ">=7.3"
         },
     "autoload": {
         "psr-4": {

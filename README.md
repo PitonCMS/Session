@@ -1,6 +1,6 @@
 # Piton Session Handler
 
-This class maintains session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is regenerated every 5 minutes or as set in the configuation array. No information, other than the key, is stored client side. All user session information is kept server side in a database table.
+This class maintains session state across page views. A hashed, salted session key is set in a cookie which is the key to the session record in a MySQL table. The session key is regenerated every 5 minutes or as set in the configuation array. No information, other than the key, is stored client side. All user session information is kept server side in your database.
 
 When the session starts the session handler looks for a session record matching the cookie key, and if found then runs optional checks to validate the session. If any of the checks fail, or if the session has timed out, the session is destoyed and a new session is started.
 
@@ -20,7 +20,7 @@ or modify your `composer.json` project file to require this package and run an u
 
 ```json
 "require": {
-  "pitoncms/session": "^1.3"
+  "pitoncms/session": "^2.1.4"
 }
 ```
 
@@ -35,7 +35,7 @@ You will need to create the session table in your MySQL database using the **Ses
 ## Usage
 To use the session handler create a new instance of `Piton\Session\SessionHandler` passing in a PDO database connection and the configuration array.
 
-### Provide a PDO Connection
+### PDO Connection
 Define a new PDO connection and pass it in as the first argument of the constructor.
 
 ```php
@@ -64,7 +64,8 @@ autoRunSession|true|Whether to run the session automatically, or only needed.
 ```php
 $config['salt'] = 'akjfao8ygoa8hba9707lakusdof87'; // Use your own salt, not this one!
 $config['secondsUntilExpiration'] = 1800; // 30 minutes. Can also use 60*60*24 to specify 1 day
-// More configuration options ...
+
+// Other configuration options ...
 ```
 
 ### Creating a Session
@@ -112,7 +113,9 @@ $values = $Session->getData();
 ```
 
 ### Save Flash Data
-You can add flash data by passing in a string, a key-value pair, or an array of key-value pairs using the `setFlashData()` method. The value can be any type as long as it is serializable to JSON. Flash data will only stay until the next request, after which it is removed automatically.
+Flash data will only stay until the next request, after which it is removed automatically.
+
+You can add flash data by passing in a string, a key-value pair, or an array of key-value pairs using the `setFlashData()` method. The value can be any type as long as it is serializable to JSON.
 
 ```php
 // Save simple key-value pair
@@ -143,7 +146,7 @@ $Session->unsetData();
 ```
 
 ### Delete a Session
-Any session that does not pass validation will be destoyed automatically. But, if you want to delete a session call the `destroy()` method.
+Any session that does not pass validation will be destoyed automatically. But, if you want to delete the current session call the `destroy()` method.
 
 ```php
 $Session->destroy();

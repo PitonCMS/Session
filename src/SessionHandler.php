@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 2.1.4
+ * @version 2.1.5
  */
 class SessionHandler
 {
@@ -182,6 +182,7 @@ class SessionHandler
             if ($this->log) {
                 $this->log->info('PitonSession: Create new session');
             }
+
             $this->create();
         }
 
@@ -295,7 +296,7 @@ class SessionHandler
 
         // Deletes session from the database
         if (isset($this->sessionId)) {
-            $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE session_id = ?");
+            $stmt = $this->db->prepare("DELETE FROM `{$this->tableName}` WHERE `session_id` = ?;");
             $stmt->execute([$this->sessionId]);
         }
 
@@ -327,7 +328,7 @@ class SessionHandler
         $this->sessionId = $sessionId;
 
         // Fetch the session from the database
-        $stmt = $this->db->prepare("SELECT data, user_agent, ip_address, time_updated FROM {$this->tableName} WHERE session_id = ?");
+        $stmt = $this->db->prepare("SELECT `data`, `user_agent`, `ip_address`, `time_updated` FROM `{$this->tableName}` WHERE `session_id` = ?;");
         $stmt->execute([$this->sessionId]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -409,7 +410,7 @@ class SessionHandler
         }
 
         // Insert new session into database
-        $stmt = $this->db->prepare("INSERT INTO {$this->tableName} (session_id, user_agent, ip_address, time_updated) VALUES (?, ?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO `{$this->tableName}` (`session_id`, `user_agent`, `ip_address`, `time_updated`) VALUES (?, ?, ?, ?);");
         $stmt->execute([$this->sessionId, $this->userAgent, $this->ipAddress, $this->now]);
 
         // Set matching cookie
@@ -428,7 +429,7 @@ class SessionHandler
         $sessionData['flash'] = $this->newFlashData;
 
         // Write session data to database
-        $stmt = $this->db->prepare("UPDATE {$this->tableName} SET data = ? WHERE session_id = ?");
+        $stmt = $this->db->prepare("UPDATE `{$this->tableName}` SET `data` = ? WHERE `session_id` = ?;");
         $stmt->execute([json_encode($sessionData), $this->sessionId]);
     }
 
@@ -484,7 +485,7 @@ class SessionHandler
             }
 
             $expiredTime = $this->now - $this->secondsUntilExpiration;
-            $stmt = $this->db->prepare("DELETE FROM {$this->tableName} WHERE time_updated < {$expiredTime}");
+            $stmt = $this->db->prepare("DELETE FROM `{$this->tableName}` WHERE `time_updated` < {$expiredTime};");
             $stmt->execute();
         }
     }
@@ -521,7 +522,7 @@ class SessionHandler
         }
 
         // Update session ID in the database
-        $stmt = $this->db->prepare("UPDATE {$this->tableName} SET time_updated = ?, session_id = ? WHERE session_id = ?");
+        $stmt = $this->db->prepare("UPDATE `{$this->tableName}` SET `time_updated` = ?, `session_id` = ? WHERE `session_id` = ?;");
         $stmt->execute([$this->now, $this->sessionId, $oldSessionId]);
 
         // Set cookie with new name

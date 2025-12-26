@@ -4,7 +4,7 @@
  * PitonCMS (https://github.com/PitonCMS)
  *
  * @link      https://github.com/PitonCMS
- * @copyright Copyright 2015 Wolfgang Moritz
+ * @copyright Copyright 2015-2026 Wolfgang Moritz
  * @license   https://github.com/PitonCMS/Session/blob/master/LICENSE (MIT License)
  */
 
@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
  * Piton Session Handler
  *
  * Manage http session state across page views.
- * @version 2.1.5
+ * @version 3.0.0
  */
 class SessionHandler
 {
@@ -28,115 +28,115 @@ class SessionHandler
      * PDO database handle
      * @var PDO connection object
      */
-    protected $db = null;
+    protected PDO $db = null;
 
     /**
      * Logger
      * @var Psr\Log\LoggerInterface
      */
-    protected $log;
+    protected LoggerInterface $log = null;
 
     /**
      * Cookie name
      * @var string
      */
-    protected $cookieName = 'sessionCookie';
+    protected string $cookieName = 'sessionCookie';
 
     /**
      * Database table
      * @var string
      */
-    protected $tableName = 'session';
+    protected string $tableName = 'session';
 
     /**
      * Number of seconds before the session expires
      * @var integer
      */
-    protected $secondsUntilExpiration = 7200;
+    protected int $secondsUntilExpiration = 7200;
 
     /**
      * Number of seconds before the session ID is regenerated
      * @var integer
      */
-    protected $renewalTime = 300;
+    protected int $renewalTime = 300;
 
     /**
      * Whether to kill the session when the browser is closed
      * @var bool
      */
-    protected $expireOnClose = false;
+    protected bool $expireOnClose = false;
 
     /**
      * Whether to check IP address in validating session ID
      * @var bool
      */
-    protected $checkIpAddress = false;
+    protected bool $checkIpAddress = false;
 
     /**
      * Whether to check the user agent in validating a session
      * @var bool
      */
-    protected $checkUserAgent = false;
+    protected bool $checkUserAgent = false;
 
     /**
      * Will only set the session cookie if a secure HTTPS connection is being used
      * @var bool
      */
-    protected $secureCookie = false;
+    protected bool $secureCookie = false;
 
     /**
      * Encyrption key to salt hash
      * @var string
      */
-    protected $salt = '';
+    protected string $salt = '';
 
     /**
      * Auto-Run Session
      * @var bool
      */
-    protected $autoRunSession = true;
+    protected bool $autoRunSession = true;
 
     /**
      * IP address that will be checked against the database if enabled.
      * @var string
      */
-    protected $ipAddress = '0.0.0.0';
+    protected string $ipAddress = '0.0.0.0';
 
     /**
      * User agent hash that will be checked against the database if enabled.
      * @var string
      */
-    protected $userAgent = 'unknown';
+    protected string $userAgent = 'unknown';
 
     /**
      * The session ID hash
      * @var string
      */
-    protected $sessionId = '';
+    protected string $sessionId = '';
 
     /**
      * Data stored by the user.
      * @var array
      */
-    protected $data = [];
+    protected array $data = [];
 
     /**
      * Flash data from the last request.
      * @var array
      */
-    protected $lastFlashData = [];
+    protected array $lastFlashData = [];
 
     /**
      * Flash data for the next request.
      * @var array
      */
-    protected $newFlashData = [];
+    protected array $newFlashData = [];
 
     /**
      * Current Unix time
      * @var integer
      */
-    protected $now;
+    protected int $now;
 
     /**
      * Constructor
@@ -144,7 +144,6 @@ class SessionHandler
      * Initialize the session handler.
      * @param object $db     PDO Database Connection
      * @param array  $config Configuration options
-     * @return void
      */
     public function __construct(PDO $db, array $config)
     {
@@ -301,7 +300,7 @@ class SessionHandler
         }
 
         // Kill the cookie by setting the value to empty, and expires to one year ago
-        $this->setCookie('0', time() - 60*60*24*365);
+        $this->setCookie("", time() - 60 * 60 * 24 * 365);
         unset($_COOKIE[$this->cookieName]);
     }
 
@@ -437,14 +436,14 @@ class SessionHandler
      * Set Cookie
      *
      * Set session cookie
-     * @param  mixed $value   Cookie value, defaults to $this->cookieName
+     * @param  string $value   Cookie value, defaults to $this->sessionId
      * @param  int   $expires Life of cookie, defaults to now + $this->secondsUntilExpiration
      * @return void
      */
-    protected function setCookie($value = null, int $expires = null): void
+    protected function setCookie(?string $value = null, ?int $expires = null): void
     {
         $value = $value ?? $this->sessionId;
-        $expires = $expires ?? ($this->expireOnClose) ? 0 : $this->now + $this->secondsUntilExpiration;
+        $expires = $expires ?? (($this->expireOnClose) ? 0 : $this->now + $this->secondsUntilExpiration);
         if ($this->log) {
             $expiresDate = date('c', $expires);
             $this->log->info("PitonSession: Setting cookie '{$this->cookieName}', value $value, until $expiresDate");
@@ -498,11 +497,7 @@ class SessionHandler
      */
     protected function generateId(): string
     {
-        $randomNumber = mt_rand(0, mt_getrandmax());
-        $ipAddressFragment = md5(substr($this->ipAddress, 0, 5));
-        $timestamp = md5(microtime(true) . $this->now);
-
-        return hash('sha256', $randomNumber . $ipAddressFragment . $this->salt . $timestamp);
+        return hash_hmac('sha256', random_bytes(32) . $this->ipAddress, $this->salt);
     }
 
     /**

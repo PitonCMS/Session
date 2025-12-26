@@ -337,7 +337,7 @@ class SessionHandler
             // Check if the session has expired in the database. The cookie should have expired so this will likely not run...
             if ($this->expireOnClose === false && ($result['time_updated'] + $this->secondsUntilExpiration) < $this->now) {
                 if ($this->log) {
-                    $this->log->info("PitonSession: Session out of date. Time updated {$result['time_updated']}. Duration {$this->secondsUntilExpiratio}. Now {$this->now}");
+                    $this->log->info("PitonSession: Session out of date. Time updated {$result['time_updated']}. Duration {$this->secondsUntilExpiration}. Now {$this->now}");
                 }
                 $this->destroy();
                 return false;
@@ -455,7 +455,7 @@ class SessionHandler
             [
                 'expires' => $expires,
                 'path' => '/',
-                'domain' => getenv('HTTP_HOST'),
+                // 'domain' => getenv('HTTP_HOST'),
                 'secure' => $this->secureCookie,
                 'httponly' => true,
                 'samesite' => 'Lax'

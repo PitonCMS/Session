@@ -2,6 +2,7 @@
     "name": "pitoncms/session",
     "description": "Manage HTTP session state without native PHP sessions",
     "type": "library",
+    "version": "3.0",
     "license": "MIT",
     "homepage": "https://github.com/pitoncms/session",
     "keywords": ["piton","pitoncms","session","sessions","session state"],
@@ -18,5 +19,8 @@
         "psr-4": {
             "Piton\\Session\\": "src"
         }
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.92"
     }
 }

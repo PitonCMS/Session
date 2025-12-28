@@ -1,1 +1,10 @@
 # Things to ignore
+
+# Files
+
+# composer.lock is automatically created, but is not needed for this library
+composer.lock
+
+
+# Directories
+vendor/

@@ -50,13 +50,13 @@ class SessionHandler
 
     /**
      * Number of seconds before the session expires
-     * @var integer
+     * @var int
      */
     protected int $secondsUntilExpiration = 7200;
 
     /**
      * Number of seconds before the session ID is regenerated
-     * @var integer
+     * @var int
      */
     protected int $renewalTime = 300;
 
@@ -134,7 +134,7 @@ class SessionHandler
 
     /**
      * Current Unix time
-     * @var integer
+     * @var int
      */
     protected int $now;
 
@@ -340,6 +340,7 @@ class SessionHandler
                     $this->log->info("PitonSession: Session out of date. Time updated {$result['time_updated']}. Duration {$this->secondsUntilExpiration}. Now {$this->now}");
                 }
                 $this->destroy();
+
                 return false;
             }
 
@@ -349,6 +350,7 @@ class SessionHandler
                     $this->log->info("PitonSession: Saved IP address {$result['ip_address']} does not match client IP {$this->ipAddress}");
                 }
                 $this->destroy();
+
                 return false;
             }
 
@@ -358,6 +360,7 @@ class SessionHandler
                     $this->log->info("PitonSession: Saved user agent {$result['user_agent']} does not match client agent {$this->userAgent}");
                 }
                 $this->destroy();
+
                 return false;
             }
 
@@ -458,7 +461,7 @@ class SessionHandler
                 // 'domain' => getenv('HTTP_HOST'),
                 'secure' => $this->secureCookie,
                 'httponly' => true,
-                'samesite' => 'Lax'
+                'samesite' => 'Lax',
             ]
         );
 

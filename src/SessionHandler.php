@@ -4,7 +4,7 @@
  * PitonCMS (https://github.com/PitonCMS)
  *
  * @link      https://github.com/PitonCMS
- * @copyright Copyright 2015-2026 Wolfgang Moritz
+ * @copyright Copyright 2015 - 2026 Wolfgang Moritz
  * @license   https://github.com/PitonCMS/Session/blob/master/LICENSE (MIT License)
  */
 
@@ -28,13 +28,13 @@ class SessionHandler
      * PDO database handle
      * @var PDO connection object
      */
-    protected PDO $db = null;
+    protected PDO $db;
 
     /**
      * Logger
      * @var Psr\Log\LoggerInterface
      */
-    protected LoggerInterface $log = null;
+    protected ?LoggerInterface $log = null;
 
     /**
      * Cookie name

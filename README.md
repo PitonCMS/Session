@@ -20,7 +20,7 @@ or modify your `composer.json` project file to require this package and run an u
 
 ```json
 "require": {
-  "pitoncms/session": "^2.1.4"
+  "pitoncms/session": "^3.0.0"
 }
 ```
 

@@ -2,8 +2,7 @@
     "name": "pitoncms/session",
     "description": "Manage HTTP session state without native PHP sessions",
     "type": "library",
-    "version": "dev-develop",
-    "license": "MIT",
+    "license": "AGPL-3.0-or-later",
     "homepage": "https://github.com/pitoncms/session",
     "keywords": ["piton","pitoncms","session","sessions","session state"],
     "authors": [
@@ -13,7 +12,7 @@
         }
     ],
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.3"
         },
     "autoload": {
         "psr-4": {

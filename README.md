@@ -33,7 +33,7 @@ If you do not use Composer, download this project and unzip. The only file you n
 You will need to create the session table in your MySQL database using the **SessionTable.sql** script. You can change the table name in the script if desired, but you will need to provide the table name as a configuration item for `tableName`.
 
 ## Usage
-To use the session handler create a new instance of `Piton\Session\SessionHandler` passing in a PDO database connection and the configuration array.
+To use the session handler create a new instance of `Piton\Session\SessionHandler` passing in a PDO database connection, a configuration array, and an optional logger that implements the `Psr\Log\LoggerInterface`.
 
 ### PDO Connection
 Define a new PDO connection and pass it in as the first argument of the constructor.
@@ -51,6 +51,7 @@ Define a configuration array and only include the options you wish to change. Th
 Option|Default|Description
 ---|:---:|---
 cookieName | 'sessionCookie' | Your session cookie name.
+domain | '' | Your primary domain name. If not provided the browser will set
 tableName|'session'|Name of the MySQL table that stores your sessions.
 secondsUntilExpiration|7200|How long before the session expires in seconds.
 renewalTime|300|How long before the session key is regenerated in seconds.
@@ -72,7 +73,7 @@ $config['secondsUntilExpiration'] = 1800; // 30 minutes. Can also use 60*60*24 t
 Create a new session as part of your application flow.
 
 ```php
-$Session = new Piton\Session\SessionHandler($dbh, $config);
+$Session = new Piton\Session\SessionHandler($dbh, $config, $logger);
 ```
 
 The session runs immediately if `autoRunSession` is set to true (which is the default) and checks for a valid session, regenerates the session key if necessary, and loads any existing session data for immediate retrieval. Create the session object once, or simply add it to your Dependency Injection Container as a singleton.

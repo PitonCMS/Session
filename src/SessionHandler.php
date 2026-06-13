@@ -19,134 +19,36 @@ use Psr\Log\LoggerInterface as Logger;
 /**
  * Piton Session Handler
  *
- * Manage http session state across page views.
+ * Manage http(s) session state across page views.
  */
 class SessionHandler
 {
-    /**
-     * PDO database handle
-     * @var PDO connection object
-     */
     protected PDO $db;
-
-    /**
-     * Logger
-     * @var Logger
-     */
     protected ?Logger $logger = null;
-
-    /**
-     * Cookie name
-     * @var string
-     */
     protected string $cookieName = 'sessionCookie';
-
-    /**
-     * Database table
-     * @var string
-     */
     protected string $tableName = 'session';
-
-    /**
-     * Domain Name
-     * @var string
-     */
     protected string $domainName = '';
-
-    /**
-     * Number of seconds before the session expires
-     * @var int
-     */
     protected int $secondsUntilExpiration = 7200;
-
-    /**
-     * Number of seconds before the session ID is regenerated
-     * @var int
-     */
     protected int $renewalTime = 300;
-
-    /**
-     * Whether to kill the session when the browser is closed
-     * @var bool
-     */
     protected bool $expireOnClose = false;
-
-    /**
-     * Whether to check IP address in validating session ID
-     * @var bool
-     */
     protected bool $checkIpAddress = false;
-
-    /**
-     * Whether to check the user agent in validating a session
-     * @var bool
-     */
     protected bool $checkUserAgent = false;
-
-    /**
-     * Will only set the session cookie if a secure HTTPS connection is being used
-     * @var bool
-     */
     protected bool $secureCookie = false;
-
-    /**
-     * Encyrption key to salt hash
-     * @var string
-     */
     protected string $salt = '';
-
-    /**
-     * Auto-Run Session
-     * @var bool
-     */
     protected bool $autoRunSession = true;
-
-    /**
-     * IP address that will be checked against the database if enabled.
-     * @var string
-     */
     protected string $ipAddress = '0.0.0.0';
-
-    /**
-     * User agent hash that will be checked against the database if enabled.
-     * @var string
-     */
     protected string $userAgent = 'unknown';
-
-    /**
-     * The session ID hash
-     * @var string
-     */
     protected string $sessionId = '';
-
-    /**
-     * Data stored by the user.
-     * @var array
-     */
     protected array $data = [];
-
-    /**
-     * Flash data from the last request.
-     * @var array
-     */
     protected array $lastFlashData = [];
-
-    /**
-     * Flash data for the next request.
-     * @var array
-     */
     protected array $newFlashData = [];
-
-    /**
-     * Current Unix time
-     * @var int
-     */
     protected int $now;
 
     /**
      * Constructor
      *
      * Initialize the session handler.
+     *
      * @param PDO    $db     PDO Database Connection
      * @param array  $config Configuration options
      * @param Logger $logger Logger
@@ -175,10 +77,10 @@ class SessionHandler
     }
 
     /**
-     * Run Session
+     * Run
      *
-     * Start session
-     * @param void
+     * Start session. Creates a session if one is not found.
+     *
      * @return void
      */
     public function run(): void
@@ -200,6 +102,7 @@ class SessionHandler
      * Set Data
      *
      * Set key => value or an array of key => values to the session data array.
+     *
      * @param mixed  $newdata  Session data array or string (key)
      * @param string $value    Value for single key
      * @return void
@@ -220,7 +123,8 @@ class SessionHandler
     /**
      * Unset Data
      *
-     * Unset a specific key from the session data array, or clear the entire array
+     * Unset a specific key from the session data array, or clear the entire array.
+     *
      * @param string $key Session data array key
      * @return void
      */
@@ -239,6 +143,7 @@ class SessionHandler
      * Get Data
      *
      * Return a specific key => value or the array of key => values from the session data array.
+     *
      * @param string $key Session data array key
      * @return mixed      Value or array, default null
      */
@@ -254,7 +159,8 @@ class SessionHandler
     /**
      * Set Flash Data
      *
-     * Set flash data that will persist only until next request
+     * Set flash data that will persist only until next request.
+     *
      * @param mixed  $newdata Flash data array or string (key)
      * @param string $value   Value for single key
      * @return void
@@ -275,7 +181,8 @@ class SessionHandler
     /**
      * Get Flash Data
      *
-     * Returns flash data
+     * Returns flash data.
+     *
      * @param string $key Flash data array key
      * @return mixed      Value or array
      */
@@ -292,9 +199,10 @@ class SessionHandler
      * Destroy Session
      *
      * Destroy the current session.
+     *
      * @return void
      */
-    public function destroy()
+    public function destroy(): void
     {
         if ($this->logger) {
             $this->logger->info("PitonSession: Deleting session {$this->sessionId}");
@@ -314,7 +222,8 @@ class SessionHandler
     /**
      * Read Session
      *
-     * Loads and validates current session from database
+     * Loads and validates current session from database.
+     *
      * @return bool
      */
     protected function read(): bool
@@ -406,7 +315,8 @@ class SessionHandler
     /**
      * Create Session
      *
-     * Creates a new ession
+     * Creates a new session.
+     *
      * @return void
      */
     protected function create(): void
@@ -430,6 +340,7 @@ class SessionHandler
      * Write Session Data
      *
      * Writes session data to the database.
+     *
      * @return void
      */
     protected function write(): void
@@ -438,14 +349,15 @@ class SessionHandler
         $sessionData['flash'] = $this->newFlashData;
 
         // Write session data to database
-        $stmt = $this->db->prepare("UPDATE `{$this->tableName}` SET `data` = ? WHERE `session_id` = ?;");
-        $stmt->execute([json_encode($sessionData), $this->sessionId]);
+        $stmt = $this->db->prepare("UPDATE `{$this->tableName}` SET `data` = ?, `time_updated` = ? WHERE `session_id` = ?;");
+        $stmt->execute([json_encode($sessionData), $this->now, $this->sessionId]);
     }
 
     /**
      * Set Cookie
      *
-     * Set session cookie
+     * Set session cookie.
+     *
      * @param  string $value   Cookie value, defaults to $this->sessionId
      * @param  int   $expires Life of cookie, defaults to now + $this->secondsUntilExpiration
      * @return void
@@ -483,6 +395,7 @@ class SessionHandler
      * Clean Old Sessions
      *
      * Removes expired sessions from the database
+     *
      * @return void
      */
     protected function cleanExpired(): void
@@ -494,15 +407,16 @@ class SessionHandler
             }
 
             $expiredTime = $this->now - $this->secondsUntilExpiration;
-            $stmt = $this->db->prepare("DELETE FROM `{$this->tableName}` WHERE `time_updated` < {$expiredTime};");
-            $stmt->execute();
+            $stmt = $this->db->prepare("DELETE FROM `{$this->tableName}` WHERE `time_updated` < ?");
+            $stmt->execute([$expiredTime]);
         }
     }
 
     /**
      * Generate New Session ID
      *
-     * Create a unique session ID
+     * Create a unique session ID.
+     *
      * @return string
      */
     protected function generateId(): string
@@ -514,6 +428,7 @@ class SessionHandler
      * Regenerate ID
      *
      * Regenerates a new session ID for the current session.
+     *
      * @return void
      */
     protected function regenerateId(): void
@@ -537,7 +452,7 @@ class SessionHandler
     /**
      * Configure Session
      *
-     * Set session handler class configuration
+     * Set session handler class configuration.
      *
      * @param array $config Configuration options
      * @return void

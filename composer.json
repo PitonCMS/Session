@@ -18,5 +18,10 @@
         "psr-4": {
             "Piton\\Session\\": "src"
         }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-develop": "3.x-dev"
+        }
     }
 }
